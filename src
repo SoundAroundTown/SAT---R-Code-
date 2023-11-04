@@ -1,0 +1,151 @@
+---
+title: "Sound Around Town Data Cleaning"
+author: "Deja Perkins"
+date: "2023-10-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Sound Around Town Data Cleaning
+
+
+This document is being used to do the preliminary preprocessing and data cleaning for the Sound Around Town project. Future versions of the data set should be able to be replaced/ read in with the first line of code.
+
+The needed steps for analysis are 
+1. 
+2. recode categories. Need a new category 
+3. Create a threshhold for number of sounds 
+
+ More Info on R markdown: 
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+library(tidyverse)
+library(janitor)
+
+data <- read_csv("Sound Around Town_October 18, 2023_12.47.csv", col_names = TRUE) %>% clean_names
+
+str(data)
+
+
+#filtering out the top two rows of redundant info
+
+data %>%
+  filter(!row_number() %in% c(1, 2)) -> data
+```
+
+## Data Cleaning Steps 
+1. Eliminate Columns that are not needed: 
+
+Columns to eliminate:
+- status, ip address, recorded_date
+- starts_with recipient
+-external_reference, location_latitude, location_longitude, distribution channel, user_language
+
+2. Check the data type for each column. According to `str(clean_cols)` everything was imported as a character. We need to change all columns to factor except date/time columns which need to be converted to dttm format.
+
+3. Columns needed for Kurt's analysis: Zip code, questions related to place & belonging (q)
+
+```{r}
+
+#  filter(!colnames() %in% c(3, 4, 8:18))
+
+clean_cols <- select(data, -c(3,4, 8:18))
+
+str(clean_cols)
+```
+
+Removing Rows 
+
+use an if then statement to drop rows that say 
+
+"test" "Test" in row "q3_1"
+filter out rows that contain "kacollin@ncsu.edu"
+filter out rows that contain "christine.dixon@live.com"
+filter out rows that contain "ballf@ncsu.edu"
+filter out rows that contain "carenbcooper@gmail.com"
+filter out rows that contain "g@gmail.com"
+filter out rows that contain "gargvarun250@gmail.com"
+filter out rows that contain "v@gmai.com"
+filter out rows that contain "fsfa@lkfjs.com"
+
+use an if then statement to drop rows that are empty from q2_1
+
+```{r}
+# using an if statement to drop rows that contain:
+
+#using a vector of strings to remove.
+remove <- c("kacollin@ncsu.edu",
+            "christine.dixon@live.com",
+            "ballf@ncsu.edu",
+            "carenbcooper@gmail.com", 
+            "g@gmail.com", 
+            "gargvarun250@gmail.com", 
+            "v@gmai.com","fsfa@lkfjs.com",  
+            "test", 
+            "Test",
+            "s@gdfasdf.com",
+            "d@gmail.com",
+            "cbcoope3@ncsu.edu")
+
+
+int1<- clean_cols[!grepl(paste(remove, collapse='|'), clean_cols$q3_2),]
+
+int2<- int1[!grepl(paste(remove, collapse='|'), int1$q3_1),]
+
+
+
+
+# converting to factor 
+
+#factor_cols <- as.factor(clean_cols) # This line of code did not work. It did not create the separate classes of columns.
+
+factor_cols <- as.data.frame(unclass(int2), stringsAsFactors = TRUE)
+
+sapply(factor_cols, class)
+
+summary(factor_cols)
+```
+## Next Steps 10/16/23
+
+-99 is a blank entry something else to potentially be removed. 
+
+Next we need to figure out the code for summarizing factor data. We attempted to use the `summary()` function but it produces an integer vector which is hard to read. 
+
+Need to get info from Caren about how the question columns/numbers align with the description document. 
+
+
+
+# Next Steps 10/18/23
+
+- create a table with the various sounds and the number of instances the sound was heard and the pleasantness score. 
+
+-number of observations per sound group ***
+
+- drop the "other" sound category
+
+-number of unique sources of sound per observer (soundscape richness) ***
+
+
+# Questions the different projects want to answer with the data 
+
+Kurt's Project:
+- What types of sounds are most to least pleasant
+- perceptions of loudness & pleasantness based on sound type
+- how does this relate to concentration level
+
+Mentee's Project:
+- concentration ability - how often people were able to get correct & how loud on average the soundscapes were on campus.
+- types of sounds on campus and the pleasantness rating
+
+Deja & Mentees:
+time series analysis of sound pleasantness over time.
+
+
+- 
+```{r}
